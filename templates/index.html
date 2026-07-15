@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConnectSphere - Disaster Recovery Control</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #040814;
+            --card-bg: rgba(6, 16, 37, 0.7);
+            --text-main: #f1f5f9;
+            --text-muted: #64748b;
+            --accent-blue: #00f0ff;
+            --accent-red: #ff3b3b;
+            --accent-green: #00ff66;
+            --accent-orange: #ff9d00;
+            --accent-purple: #a855f7;
+            --panel-glow: 0 0 25px rgba(0, 240, 255, 0.12);
+            --border: rgba(0, 240, 255, 0.15);
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.015) 1px, transparent 1px),
+                radial-gradient(circle at 15% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 85% 80%, rgba(255, 59, 59, 0.05) 0%, transparent 50%);
+            background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%;
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, rgba(4, 9, 24, 0.95) 0%, rgba(2, 5, 15, 0.98) 100%);
+            border-right: 2px solid var(--border);
+            padding: 40px 24px;
+            box-shadow: 10px 0 40px rgba(0,0,0,0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            font-size: 1.65rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar p {
+            padding: 14px 18px;
+            border-radius: 12px;
+            background: rgba(0, 240, 255, 0.04);
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            border-left: 5px solid var(--accent-blue);
+            margin-top: 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.05);
+        }
+
+        /* LIVE TELEMETRY LOG MODULE FOR SCREENSHARE WOW FACTOR */
+        .terminal-box {
+            background: #020617;
+            border: 1px solid rgba(0, 255, 102, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--accent-green);
+            height: 150px;
+            overflow-y: hidden;
+            margin-top: auto;
+            box-shadow: inset 0 0 15px rgba(0, 255, 102, 0.05);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 45px 50px;
+            overflow-y: auto;
+        }
+
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #ffffff 40%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 2px solid rgba(0, 240, 255, 0.08);
+            padding-bottom: 16px;
+            color: #ffffff;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+        }
+
+        .dashboard-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 35px;
+            margin-top: 30px;
+            width: 100%;
+        }
+
+        .action-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 35px;
+            width: 100%;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(0, 240, 255, 0.12);
+            border-radius: 20px;
+            padding: 28px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), inset 0 1px 2px rgba(255,255,255,0.05);
+            transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.3), transparent);
+            transition: all 0.45s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(0, 240, 255, 0.4);
+            box-shadow: var(--panel-glow), 0 25px 60px rgba(0,0,0,0.7);
+            transform: translateY(-4px);
+        }
+
+        .glass-card:hover::before {
+            background: linear-gradient(90deg, transparent, var(--accent-blue), transparent);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            letter-spacing: 1.5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 14px 18px;
+            background: rgba(3, 7, 18, 0.8);
+            border: 1px solid rgba(0, 240, 255, 0.1);
+            border-radius: 12px;
+            color: #ffffff;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+            background: rgba(2, 5, 13, 0.95);
+        }
+
+        button {
+            color: #040814;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-size: 0.88rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.2);
+        }
+
+        .feed-item {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.012);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: 14px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .feed-item:hover {
+            background: rgba(0, 240, 255, 0.02);
+            border-color: rgba(0, 240, 255, 0.2);
+            transform: scale(1.01);
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.2); border-radius: 4px; }
+
+        @keyframes pulseWave {
+            0% { height: 15%; opacity: 0.4; }
+            100% { height: 95%; opacity: 1; filter: drop-shadow(0 0 6px var(--accent-blue)); }
+        }
+        @keyframes rotateRadar {
+            0% { stroke-dashoffset: 138; }
+            50% { stroke-dashoffset: 40; filter: drop-shadow(0 0 4px var(--accent-green)); }
+            100% { stroke-dashoffset: 138; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR WITH INTEGRATED DYNAMIC TELEMETRY VISUAL -->
+    <div class="sidebar">
+        <div class="logo"><i class="fa-solid fa-satellite-dish"></i> ConnectSphere</div>
+        <p style="color: var(--accent-blue);"><i class="fa-solid fa-chart-pie"></i> Emergency Hub</p>
+        
+        <!-- Live Sync Terminal Feed -->
+        <div class="terminal-box">
+            <div style="font-weight:700; border-bottom:1px solid rgba(0,255,102,0.2); padding-bottom:4px; margin-bottom:6px; color:#fff;">
+                <i class="fa-solid fa-terminal"></i> Mesh Node Streams
+            </div>
+            <div id="terminalStream"></div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- TOP TACTICAL CONTROL GRAPHICS BANNER -->
+        <div class="glass-card full-width" style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px;">
+            <div style="flex: 1; min-width: 300px;">
+                <h1 style="display: flex; align-items: center; gap: 10px;"><i class="fa-solid fa-radiation fa-spin" style="color: var(--accent-blue); animation-duration: 8s;"></i> Local Mesh Node Status: Connected</h1>
+                <p style="color: var(--text-muted); margin: 5px 0 15px 0;">EMP Incident Response Protocol active. Multi-channel operations running entirely off-grid.</p>
+                <div id="globalAlertBanner" style="padding: 14px; background: rgba(245, 101, 101, 0.1); border: 1px dashed var(--accent-red); border-radius: 8px; color: #fc8181; font-weight: 600;">
+                    <i class="fa-solid fa-bullhorn fa-beat" style="margin-right: 8px;"></i> <span id="alertBannerText">Loading latest mesh broadcast...</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 25px; align-items: center; padding: 15px 25px; background: rgba(3, 7, 18, 0.6); border-radius: 14px; border: 1px solid rgba(0,240,255,0.08);">
+                <div style="text-align: center; width: 120px;">
+                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">Mesh Freq Wave</span>
+                    <div style="display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 50px; margin-top: 10px;">
+                        <div class="wave-bar" style="width: 4px; background: var(--accent-blue); height: 20%; animation: pulseWave 0.6s ease-in-out infinite alternate;"></div>
+                        <div class="wave-bar" style="width: 4px; background: var(--accent-blue); height: 60%; animation: pulseWave 0.4s ease-in-out infinite alternate 0.2s;"></div>
+                        <div class="wave-bar" style="width: 4px; background: var(--accent-blue); height: 90%; animation: pulseWave 0.8s ease-in-out infinite alternate 0.1s;"></div>
+                        <div class="wave-bar" style="width: 4px; background: var(--accent-blue); height: 40%; animation: pulseWave 0.5s ease-in-out infinite alternate 0.3s;"></div>
+                        <div class="wave-bar" style="width: 4px; background: var(--accent-blue); height: 75%; animation: pulseWave 0.7s ease-in-out infinite alternate 0.15s;"></div>
+                    </div>
+                </div>
+                <div style="width: 1px; background: rgba(255,255,255,0.1); height: 60px;"></div>
+                <div style="text-align: center; width: 120px; display: flex; flex-direction: column; align-items: center;">
+                    <span style="font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">Node Load</span>
+                    <div style="position: relative; width: 55px; height: 55px; margin-top: 8px; display: flex; align-items: center; justify-content: center;">
+                        <svg width="55" height="55" style="transform: rotate(-90deg);">
+                            <circle cx="27.5" cy="27.5" r="22" stroke="rgba(255,255,255,0.05)" stroke-width="4" fill="transparent"/>
+                            <circle cx="27.5" cy="27.5" r="22" stroke="var(--accent-green)" stroke-width="4" fill="transparent" 
+                                    stroke-dasharray="138" stroke-dashoffset="35" style="animation: rotateRadar 4s linear infinite;"/>
+                        </svg>
+                        <span style="position: absolute; font-size: 0.8rem; font-weight: 700; color: var(--accent-green);">74%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- ROW 1: INPUT FORMS -->
+            <div class="action-row">
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-circle-exclamation" style="color: var(--accent-red);"></i> Broadcast SOS</h2>
+                    <form id="sosForm">
+                        <div class="form-group">
+                            <label>Your Name / Identifier</label>
+                            <input type="text" id="sos_name" required placeholder="e.g., Sector 2 Lead">
+                        </div>
+                        <div class="form-group">
+                            <label>Current Location</label>
+                            <input type="text" id="sos_location" required placeholder="e.g., Main Street Shelter">
+                        </div>
+                        <div class="form-group">
+                            <label>Emergency Severity Tier</label>
+                            <select id="sos_category" required>
+                                <option value="Critical Emergency">🚨 Critical / Life Threat</option>
+                                <option value="Medical Supplies">💊 Medical Need</option>
+                                <option value="Food & Water">🍲 Food & Water Supply</option>
+                                <option value="Shelter/Hazard">🏚️ Structural / Shelter Hazard</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Immediate Need Details</label>
+                            <textarea id="sos_message" rows="3" required placeholder="Describe status precisely..."></textarea>
+                        </div>
+                        <button type="submit" style="background: var(--accent-red);">Transmit SOS Signal</button>
+                    </form>
+                    
+                    <!-- ACOUSTIC DISTRESS BEACON EXTENSION -->
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed rgba(255, 74, 74, 0.3);">
+                        <label style="color: #feb2b2;"><i class="fa-solid fa-wave-square"></i> Acoustic Emergency Mesh</label>
+                        <button type="button" onclick="triggerAudioBeacon()" id="beaconBtn" style="background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%); color: #fff; margin-top: 8px; font-size: 0.8rem; padding: 10px 15px;">
+                            <i class="fa-solid fa-volume-high fa-pulse"></i> Emit Audio Distress Signal
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-hand-holding-hand" style="color: var(--accent-blue);"></i> Deploy Resources</h2>
+                    <form id="offerForm">
+                        <div class="form-group">
+                            <label>Helper / Group Identity</label>
+                            <input type="text" id="res_helper_name" required placeholder="e.g., Volunteer Corps 4">
+                        </div>
+                        <div class="form-group">
+                            <label>Available Resource Pool</label>
+                            <input type="text" id="res_resource_type" required placeholder="e.g., Water Rations, Ham Radios">
+                        </div>
+                        <div class="form-group">
+                            <label>Coordination Frequency</label>
+                            <input type="text" id="res_contact_details" required placeholder="e.g., Radio CH 16 or Tent C">
+                        </div>
+                        <button type="submit" style="background: var(--accent-blue);">Broadcast Supply Offer</button>
+                    </form>
+                </div>
+
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-tower-broadcast" style="color: var(--accent-orange);"></i> Push Announcement</h2>
+                    <form id="broadcastForm">
+                        <div class="form-group">
+                            <label>Alert Message / News Flash</label>
+                            <textarea id="bc_broadcastText" rows="6" required placeholder="e.g., Ration truck arriving at Sector 4 in 30 mins..."></textarea>
+                        </div>
+                        <button type="submit" style="background: var(--accent-orange);">Broadcast to All Nodes</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ROW 2: TACTICAL MESH PACKETS OVERVIEW -->
+            <div class="action-row">
+                <div class="glass-card full-width">
+                    <h2><i class="fa-solid fa-network-wired" style="color: var(--accent-purple);"></i> Tactical Mesh Packet Exchange (Offline Sync Protocol)</h2>
+                    <p style="color: var(--text-muted); margin-top: -10px; font-size: 0.9rem;">Node status logs compressed into lightweight hexadecimal mesh packets for manual P2P sharing via radio audio/Bluetooth.</p>
+                    
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px;">
+                        <div style="flex: 1; min-width: 220px; background: rgba(3, 7, 18, 0.5); padding: 18px; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.2); text-align: center;">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">Data Packet Size</div>
+                            <div style="font-size: 1.8rem; font-weight: 800; color: var(--accent-purple); margin: 8px 0;">1.42 KB</div>
+                            <small style="color: var(--accent-green); font-weight: 600;"><i class="fa-solid fa-bolt"></i> 98% Compression Ratio</small>
+                        </div>
+
+                        <div style="flex: 1; min-width: 220px; background: rgba(3, 7, 18, 0.5); padding: 18px; border-radius: 12px; border: 1px solid rgba(0, 240, 255, 0.2); text-align: center;">
+                            <div style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 1px;">Active Radio Peers</div>
+                            <div id="peerCounter" style="font-size: 1.8rem; font-weight: 800; color: var(--accent-blue); margin: 8px 0;">5 Nodes</div>
+                            <small style="color: var(--text-muted);">Within 2.4 GHz Range</small>
+                        </div>
+
+                        <div style="flex: 2; min-width: 320px; background: rgba(3, 7, 18, 0.8); padding: 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; gap: 15px;">
+                            <div style="flex: 1;">
+                                <div style="font-family: monospace; font-size: 0.75rem; color: #a7f3d0; word-break: break-all; background: #022c22; padding: 10px; border-radius: 6px; border: 1px solid #065f46;">
+                                    SEC_NODE//M_PKT_ENC:[41:78:66:68:61:5f:73:79:6e:63]
+                                </div>
+                            </div>
+                            <button onclick="simulatePacketSync()" style="width: auto; background: var(--accent-purple); color: #fff; padding: 12px 20px; white-space: nowrap; font-size: 0.8rem;">
+                                <i class="fa-solid fa-sync fa-sync"></i> Sync Packet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROW 3: FEEDS & MISSING FORM -->
+            <div class="action-row">
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-rss" style="color: var(--accent-blue);"></i> Active Incident Log</h2>
+                    <div id="feedContainer" style="max-height: 420px; overflow-y: auto;">Loading incidents...</div>
+                </div>
+
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-boxes-stacked" style="color: var(--accent-green);"></i> Active Resource Pools</h2>
+                    <div id="offersContainer" style="max-height: 420px; overflow-y: auto;">Loading deployment channels...</div>
+                </div>
+
+                <div class="glass-card">
+                    <h2><i class="fa-solid fa-users-viewfinder" style="color: #64748b;"></i> Missing Report Register</h2>
+                    <form id="missingForm">
+                        <div class="form-group">
+                            <label>Full Name of Person</label>
+                            <input type="text" id="mp_person_name" required placeholder="e.g., Jane Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Last Known Location / Status</label>
+                            <input type="text" id="mp_last_seen" required placeholder="e.g., Near Market Square">
+                        </div>
+                        <div class="form-group">
+                            <label>Your Contact Details</label>
+                            <input type="text" id="mp_reporter_contact" required placeholder="e.g., Radio Freq 145.2">
+                        </div>
+                        <button type="submit" style="background: #4a5568; color: #fff;">Log Missing Report</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ROW 4: DIRECTORIES -->
+            <div class="action-row">
+                <div class="glass-card full-width">
+                    <h2><i class="fa-solid fa-tent" style="color: var(--accent-orange);"></i> Designated Safe Zones (Shelters)</h2>
+                    <div id="shelterContainer" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 5px;">
+                        Loading shelters from local mesh...
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-row">
+                <div class="glass-card full-width">
+                    <h2><i class="fa-solid fa-address-book" style="color: #cbd5e0;"></i> Active Missing Persons Bulletin</h2>
+                    <div id="missingContainer" style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 5px;">
+                        Loading bulletin data...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- PIPELINE CORE RUNTIME ENGINE -->
+    <script>
+    function logTerminal(text) {
+        const stream = document.getElementById('terminalStream');
+        if(!stream) return;
+        const time = new Date().toLocaleTimeString().split(' ')[0];
+        stream.innerHTML += `<div style="margin-bottom:4px;"><span style="color:var(--text-muted);">[${time}]</span> >> ${text}</div>`;
+        stream.parentElement.scrollTop = stream.parentElement.scrollHeight;
+    }
+
+    function showStatusText(formEl, msg, color) {
+        const existing = formEl.querySelector('.toast-msg');
+        if(existing) existing.remove();
+        
+        const div = document.createElement('div');
+        div.className = 'toast-msg';
+        div.style.cssText = `margin-top:12px; padding:10px; border-radius:6px; font-size:0.85rem; font-weight:600; text-align:center; background:rgba(255,255,255,0.05); border:1px solid ${color}; color:${color};`;
+        div.innerHTML = msg;
+        formEl.appendChild(div);
+        
+        setTimeout(() => div.remove(), 3000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        logTerminal("Mesh Node System Bootstrapped.");
+        logTerminal("Secure local database channel synchronized.");
+        
+        // 1. SOS Event Block
+        const sosForm = document.getElementById('sosForm');
+        if(sosForm) {
+            sosForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                logTerminal("Initiating emergency SOS transmission sequence...");
+                const payload = {
+                    name: document.getElementById('sos_name').value,
+                    location: document.getElementById('sos_location').value,
+                    message: document.getElementById('sos_message').value,
+                    category: document.getElementById('sos_category').value
+                };
+                fetch('/api/sos', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        showStatusText(sosForm, "🚨 SOS Transmitted Successfully!", "var(--accent-red)");
+                        logTerminal(`SUCCESS: Critical SOS sent by ${payload.name}`);
+                        sosForm.reset();
+                        loadCommunityFeed();
+                    }
+                }).catch(err => console.error(err));
+            });
+        }
+
+        // 2. Resource Offers Event Block
+        const offerForm = document.getElementById('offerForm');
+        if(offerForm) {
+            offerForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                logTerminal("Compiling resource package allocation matrix...");
+                const payload = {
+                    helper_name: document.getElementById('res_helper_name').value,
+                    resource_type: document.getElementById('res_resource_type').value,
+                    contact_details: document.getElementById('res_contact_details').value
+                };
+                fetch('/api/offers', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        showStatusText(offerForm, "📦 Supply Drops Logged!", "var(--accent-blue)");
+                        logTerminal(`SUCCESS: Resource drop registered by ${payload.helper_name}`);
+                        offerForm.reset();
+                        loadOffers();
+                    }
+                }).catch(err => console.error(err));
+            });
+        }
+
+        // 3. Admin Announcement Event Block
+        const broadcastForm = document.getElementById('broadcastForm');
+        if(broadcastForm) {
+            broadcastForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                logTerminal("Broadcasting administrative flash over telemetry frequencies...");
+                const payload = {
+                    alert_text: document.getElementById('bc_broadcastText').value
+                };
+                fetch('/api/broadcast', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        showStatusText(broadcastForm, "📡 News Broadcast Active!", "var(--accent-orange)");
+                        logTerminal("SUCCESS: System ticker broadcast refreshed.");
+                        broadcastForm.reset();
+                        loadLatestBroadcast();
+                    }
+                }).catch(err => console.error(err));
+            });
+        }
+
+        // 4. Missing Persons Report Event Block
+        const missingForm = document.getElementById('missingForm');
+        if(missingForm) {
+            missingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                logTerminal("Logging tracking bulletin parameters into active registry...");
+                const payload = {
+                    person_name: document.getElementById('mp_person_name').value,
+                    last_seen: document.getElementById('mp_last_seen').value,
+                    contact_info: document.getElementById('mp_reporter_contact').value
+                };
+                fetch('/api/missing', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                }).then(res => res.json()).then(data => {
+                    if(data.success) {
+                        showStatusText(missingForm, "🔍 Bulletin Logged Live!", "var(--accent-green)");
+                        logTerminal(`SUCCESS: Missing bulletin logged for ${payload.person_name}`);
+                        missingForm.reset();
+                        loadMissingPersons();
+                    }
+                }).catch(err => console.error(err));
+            });
+        }
+
+        loadCommunityFeed();
+        loadOffers();
+        loadShelters();
+        loadMissingPersons();
+        loadLatestBroadcast();
+    });
+
+    // --- VIEW LOADERS ENGINE ---
+    function loadCommunityFeed() {
+        fetch('/api/feed').then(res => res.json()).then(data => {
+            const container = document.getElementById('feedContainer');
+            if(!container) return; container.innerHTML = '';
+            if(data.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; padding:10px;">No incidents logged.</p>'; return; }
+            data.forEach(item => {
+                let badgeColor = "var(--accent-blue)";
+                if(item.category === "Critical Emergency") badgeColor = "var(--accent-red)";
+                else if(item.category === "Medical Supplies") badgeColor = "var(--accent-green)";
+                else if(item.category === "Food & Water") badgeColor = "var(--accent-orange)";
+                
+                const div = document.createElement('div'); div.className = 'feed-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-bottom: 6px;">
+                        <strong style="color:#fff;"><i class="fa-solid fa-user-shield"></i> ${item.name}</strong>
+                        <span style="color:var(--accent-blue); font-size:0.85rem;"><i class="fa-solid fa-location-crosshairs"></i> ${item.location}</span>
+                    </div>
+                    <div style="display:inline-block; padding:4px 10px; border-radius:6px; font-size:10px; background:${badgeColor}; color:#060d1a; margin:6px 0; font-weight:700; text-transform:uppercase;">${item.category}</div>
+                    <p style="margin:6px 0 0 0; font-size:0.95rem; color:#e2e8f0;">${item.message}</p>
+                `;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    function loadOffers() {
+        fetch('/api/offers').then(res => res.json()).then(data => {
+            const container = document.getElementById('offersContainer');
+            if(!container) return; container.innerHTML = '';
+            if(data.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); font-size:0.9rem; padding:10px;">No drops active.</p>'; return; }
+            data.forEach(item => {
+                const div = document.createElement('div'); div.className = 'feed-item';
+                div.innerHTML = `
+                    <strong style="color:var(--accent-blue); font-size:0.95rem;"><i class="fa-solid fa-hand-holding-heart"></i> ${item.helper_name}</strong>
+                    <p style="margin:5px 0; font-size:0.95rem; color:#e2e8f0;"><strong>Asset:</strong> ${item.resource_type}</p>
+                    <small style="color:var(--text-muted);">Loc/Radio: ${item.contact_details}</small>
+                `;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    function loadShelters() {
+        fetch('/api/shelters').then(res => res.json()).then(data => {
+            const container = document.getElementById('shelterContainer');
+            if(!container) return; container.innerHTML = '';
+            data.forEach(item => {
+                const div = document.createElement('div');
+                div.style.cssText = "flex:1 1 calc(33.33% - 20px); min-width:250px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:20px; box-sizing:border-box;";
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <strong style="color:var(--accent-orange); font-size:1.1rem;">${item.name}</strong>
+                        <span style="font-size:0.75rem; background:var(--accent-green); color:#060d1a; padding:2px 8px; border-radius:6px; font-weight:700;">${item.status}</span>
+                    </div>
+                    <p style="margin:6px 0; font-size:0.9rem; color:#cbd5e0;"><i class="fa-solid fa-map-pin"></i> ${item.address}</p>
+                    <small style="color:var(--text-muted);">Max: ${item.capacity} Persons</small>
+                `;
+                container.appendChild(div);
+            });
+        });
+    }
+
+    function loadMissingPersons() {
+        fetch('/api/missing').then(res => res.json()).then(data => {
+            const container = document.getElementById('missingContainer');
+            if(!container) return; container.innerHTML = '';
+            if(data.length === 0) { container.innerHTML = '<p style="color:var(--text-muted); padding:10px;">No logs.</p>'; return; }
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.style.cssText = "flex:1 1 calc(25% - 15px); min-width:220px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; padding:18px; box-sizing:border-box;";
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <strong style="color:#fff; font-size:1.05rem;">${item.person_name}</strong>
+                        <span style="font-size:0.75rem; background:rgba(255,255,255,0.1); color:#fff; padding:2px 6px; border-radius:4px; font-weight:700;">${item.status}</span>
+                    </div>
+                    <p style="margin:6px 0; font-size:0.88rem; color:#cbd5e0;"><strong>Last Seen:</strong> ${item.last_seen}</p>
+                    <small style="color:var(--accent-blue);">Contact: ${item.contact_info}</small>
+                `;
+                container.appendChild(card);
+            });
+        });
+    }
+
+    function loadLatestBroadcast() {
+        fetch('/api/broadcast').then(res => res.json()).then(data => {
+            const banner = document.getElementById('alertBannerText');
+            if(banner) banner.innerHTML = `<span>${data.alert_text}</span>`;
+        });
+    }
+
+    // --- PACKET SYNC CONTROLLER INTERACTION ---
+    function simulatePacketSync() {
+        const btn = document.querySelector('button[onclick="simulatePacketSync()"]');
+        if(!btn) return;
+        
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Encrypting...`;
+        logTerminal("Compressing node database into crypto-packet...");
+        
+        setTimeout(() => {
+            btn.innerHTML = `<i class="fa-solid fa-check-double"></i> Packets Synced!`;
+            btn.style.background = "var(--accent-green)";
+            btn.style.color = "#040814";
+            logTerminal("SUCCESS: 1.42 KB packet synchronized via acoustic layer.");
+            
+            const peerElement = document.getElementById('peerCounter');
+            if(peerElement) {
+                const currentPeers = Math.floor(Math.random() * (9 - 3 + 1)) + 3;
+                peerElement.innerText = currentPeers + " Nodes";
+            }
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.style.background = "var(--accent-purple)";
+                btn.style.color = "#fff";
+                btn.innerHTML = `<i class="fa-solid fa-sync fa-sync"></i> Sync Packet`;
+            }, 2000);
+        }, 1500);
+    }
+
+    // --- WEB AUDIO API ENGINE ---
+    let audioCtx = null;
+    let beaconInterval = null;
+
+    function triggerAudioBeacon() {
+        const btn = document.getElementById('beaconBtn');
+        if (!btn) return;
+
+        if (beaconInterval) {
+            clearInterval(beaconInterval);
+            beaconInterval = null;
+            btn.style.background = "linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%)";
+            btn.innerHTML = `<i class="fa-solid fa-volume-high"></i> Emit Audio Distress Signal`;
+            logTerminal("Acoustic Emergency distress beacon deactivated.");
+            return;
+        }
+
+        btn.style.background = "var(--accent-green)";
+        btn.style.color = "#040814";
+        btn.innerHTML = `<i class="fa-solid fa-waveform-lines fa-spin"></i> Broadcasting...`;
+        logTerminal("WARNING: Transmitting high-pitch acoustic distress tracking sequence!");
+
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        beaconInterval = setInterval(() => {
+            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(950, audioCtx.currentTime); 
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.6);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+        }, 1200);
+    }
+
+    // --- AUTO LOG SIMULATION ENGINE ---
+    setInterval(() => {
+        const randomLoad = Math.floor(Math.random() * (82 - 68 + 1)) + 68;
+        const countElement = document.querySelector('span[style*="color: var(--accent-green)"]');
+        if(countElement) countElement.innerText = randomLoad + "%";
+        
+        // Randomly update terminal console logs to show active system operations
+        const messages = [
+            "P2P signal beacon pinged successfully.",
+            "Refreshing local network cache data pools...",
+            "Checking database transaction integrity: OK",
+            "Broadcasting mesh ping to adjacent channel node.",
+            "Local storage packet sync loop operating within limits."
+        ];
+        const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+        logTerminal(randomMsg);
+    }, 3000);
+    </script>
+</body>
+</html>
