@@ -1,10 +1,10 @@
 import os
 import sqlite3
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Render cloud instance ke mutabik dynamic target path set kiya hai
+# Render instance optimized secure path layout
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'connectsphere_v9.db')
 
 def get_db_connection():
@@ -16,58 +16,58 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # 1. SOS Critical Incidents Table
+    # 1. SOS Incidents Table Fix
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS sos_feed (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT EXISTS,
-            location TEXT NOT EXISTS,
-            message TEXT NOT EXISTS,
-            category TEXT NOT EXISTS
+            name TEXT NOT NULL,
+            location TEXT NOT NULL,
+            message TEXT NOT NULL,
+            category TEXT NOT NULL
         )
     ''')
     
-    # 2. Resource Offers Table
+    # 2. Resource Offers Table Fix
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS resource_offers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            helper_name TEXT NOT EXISTS,
-            resource_type TEXT NOT EXISTS,
-            contact_details TEXT NOT EXISTS
+            helper_name TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            contact_details TEXT NOT NULL
         )
     ''')
     
-    # 3. Global Broadcast Alerts Table
+    # 3. Global Broadcast Alerts Table Fix
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS announcements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            alert_text TEXT NOT EXISTS
+            alert_text TEXT NOT NULL
         )
     ''')
 
-    # 4. Missing Persons Directory Table
+    # 4. Missing Persons Directory Table Fix
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS missing_persons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            person_name TEXT NOT EXISTS,
-            last_seen TEXT NOT EXISTS,
-            contact_info TEXT NOT EXISTS,
+            person_name TEXT NOT NULL,
+            last_seen TEXT NOT NULL,
+            contact_info TEXT NOT NULL,
             status TEXT DEFAULT 'Missing'
         )
     ''')
 
-    # 5. Designated Safe Zones Table
+    # 5. Safe Zones Table Fix
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS safe_zones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT EXISTS,
-            address TEXT NOT EXISTS,
-            capacity TEXT NOT EXISTS,
-            status TEXT NOT EXISTS
+            name TEXT NOT NULL,
+            address TEXT NOT NULL,
+            capacity TEXT NOT NULL,
+            status TEXT NOT NULL
         )
     ''')
     
-    # Seed data injection for Safe Zones if table is blank
+    # Seed data injection if dashboard directories are empty
     cursor.execute("SELECT COUNT(*) FROM safe_zones")
     if cursor.fetchone()[0] == 0:
         cursor.executemany('''
@@ -78,7 +78,6 @@ def init_db():
             ("Emergency Shelter 3", "Old Metro Complex", "800", "🟡 Near Capacity")
         ])
 
-    # Seed initial announcement if table is blank
     cursor.execute("SELECT COUNT(*) FROM announcements")
     if cursor.fetchone()[0] == 0:
         cursor.execute("INSERT INTO announcements (alert_text) VALUES (?)", 
@@ -88,8 +87,6 @@ def init_db():
     conn.close()
     print("📢 All Core Tables Verified & Created Successfully!")
 
-# --- HTML TEMPLATE FALLBACK ENGINE ---
-# Yeh ensure karega ki agar templates/index.html na mile toh ye code crash na ho
 @app.route('/')
 def home():
     try:
@@ -168,11 +165,8 @@ def handle_shelters():
     conn.close()
     return jsonify([dict(row) for row in rows])
 
-# --- SERVER INITIALIZATION ---
 init_db()
 
 if __name__ == '__main__':
-    # Render dynamic PORT mapping configuration
     port = int(os.environ.get("PORT", 5000))
-    # Public interface visibility binding on 0.0.0.0
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=port)
