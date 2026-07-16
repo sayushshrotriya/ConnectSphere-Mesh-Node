@@ -1,8 +1,14 @@
 # 📡 ConnectSphere v9 — Off-Grid Disaster Command Node
 
-> **EMP-Resistant / Internet-Independent Crisis Architecture**
+> **EMP-Resistant / Internet-Independent Crisis Architecture Blueprint**
 
 ConnectSphere is an offline-first disaster response system engineered to deploy instantly during telecommunication infrastructure collapses. Running entirely off-grid on localized environments, it synchronizes critical survival data through peer-to-peer acoustic layers.
+
+---
+
+## 🌐 Quick Links & Live Infrastructure
+🚀 **Experience the Live Simulation Control Deck Here:**  
+👉 **[Click Here for Live Hosted Demo (Render Cloud Setup)](https://connectsphere-o6lx.onrender.com)**
 
 ---
 
